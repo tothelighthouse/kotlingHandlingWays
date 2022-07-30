@@ -28,7 +28,6 @@ sealed class List<out A> {
             Nil -> list
             is Cons -> if (p(list.head)) dropWhile(list.tail, p) else list
         }
-        fun <A> concat(list1: List<A>, list2: List<A>): List<A> = list1.reverse().foldLeft(list2) { x -> x::cons }
         fun <A, B> foldRight(list: List<A>, identity: B, f: (A) -> (B) -> B): B =
             when (list) {
                 Nil -> identity
@@ -39,14 +38,15 @@ sealed class List<out A> {
                 Nil -> acc
                 is Cons -> foldLeft(f(acc)(list.head), list.tail, f)
             }
+        operator fun <A> invoke(vararg az: A): List<A> =
+            az.foldRight(Nil) { a: A, list: List<A> -> Cons(a, list) }
+        fun <A> concat(list1: List<A>, list2: List<A>): List<A> = list1.reverse().foldLeft(list2) { x -> x::cons }
+
         tailrec fun <A, B> coFoldRight(acc: B, list: List<A>, identity: B, f: (A) -> (B) -> B): B =
             when (list) {
                 Nil -> acc
                 is Cons -> coFoldRight(f(list.head)(acc), list.tail, identity, f)
             }
-        operator fun <A> invoke(vararg az: A): List<A> =
-            az.foldRight(Nil) { a: A, list: List<A> -> Cons(a, list) }
-
         fun <A> concatViaFoldRight(list1: List<A>, list2: List<A>): List<A> = foldRight(list1, list2) { x -> { y -> Cons(x, y) } }
         fun <A> flatten(list: List<List<A>>): List<A> = list.coFoldRight(Nil) { x -> x::concat }
 
@@ -57,13 +57,13 @@ sealed class List<out A> {
         is Cons -> Cons(a, this.tail)
     }
     fun cons(a: @UnsafeVariance A): List<A> = Cons(a, this)
-    fun concat(list: List<@UnsafeVariance A>): List<A> = concat(this, list)
     fun drop(n: Int): List<A> = drop(this, n)
     fun dropWhile(p: (A) -> Boolean): List<A> = dropWhile(this, p)
-    fun reverse(): List<A> = foldLeft(Nil as List<A>) { acc -> { acc.cons(it) } }
     fun <B> foldRight(identity: B, f: (A) -> (B) -> B): B = foldRight(this, identity, f)
     fun <B> foldLeft(identity: B, f: (B) -> (A) -> B): B = foldLeft(identity, this, f)
+    fun reverse(): List<A> = foldLeft(Nil as List<A>) { acc -> { acc.cons(it) } }
     fun length(): Int = foldLeft(0) { { _ -> it + 1} }
+    fun concat(list: List<@UnsafeVariance A>): List<A> = concat(this, list)
 
     fun concatViaFoldRight(list: List<@UnsafeVariance A>): List<A> = List.concatViaFoldRight(this, list)
     fun <B> foldRightViaFoldLeft(identity: B, f: (A) -> (B) -> B): B =
