@@ -52,10 +52,6 @@ sealed class List<out A> {
 
     }
 
-    fun setHead(a: @UnsafeVariance A): List<A> = when (this) {
-        Nil -> throw IllegalStateException("setHead called on an empty list")
-        is Cons -> Cons(a, this.tail)
-    }
     fun cons(a: @UnsafeVariance A): List<A> = Cons(a, this)
     fun drop(n: Int): List<A> = drop(this, n)
     fun dropWhile(p: (A) -> Boolean): List<A> = dropWhile(this, p)
@@ -65,6 +61,10 @@ sealed class List<out A> {
     fun length(): Int = foldLeft(0) { { _ -> it + 1} }
     fun concat(list: List<@UnsafeVariance A>): List<A> = concat(this, list)
 
+    fun setHead(a: @UnsafeVariance A): List<A> = when (this) {
+        Nil -> throw IllegalStateException("setHead called on an empty list")
+        is Cons -> Cons(a, this.tail)
+    }
     fun concatViaFoldRight(list: List<@UnsafeVariance A>): List<A> = List.concatViaFoldRight(this, list)
     fun <B> foldRightViaFoldLeft(identity: B, f: (A) -> (B) -> B): B =
             this.reverse().foldLeft(identity) { x -> { y -> f(y)(x) } }
